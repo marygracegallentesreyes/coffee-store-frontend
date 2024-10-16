@@ -1,32 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-const ProductDetailPage = () => {
+const ProductDetailPage = ({ addToCart }) => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1); // Add quantity for the cart
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/products/${id}`)
-      .then(response => response.json())
-      .then(data => setProduct(data))
-      .catch(error => console.error('Error fetching product details:', error));
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/products/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch product');
+        }
+        const data = await response.json();
+        setProduct(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
   }, [id]);
 
-  const addToCart = () => {
-    fetch('http://localhost:5000/cart', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id: product.id, quantity: quantity }),
-    })
-    .then(response => response.json())
-    .then(data => console.log('Cart updated:', data))
-    .catch(error => console.error('Error adding to cart:', error));
-  };
+  if (loading) {
+    return <div>Loading product details...</div>;
+  }
 
-  if (!product) return <h2>Product not found</h2>;
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!product) {
+    return <div>Product not found!</div>;
+  }
 
   return (
     <div>
@@ -34,11 +44,7 @@ const ProductDetailPage = () => {
       <img src={product.image} alt={product.name} />
       <p>{product.description}</p>
       <p>${product.price}</p>
-      <label>
-        Quantity: 
-        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-      </label>
-      <button onClick={addToCart}>Add to Cart</button>
+      <button onClick={() => addToCart(product)}>Add to Cart</button>
     </div>
   );
 };

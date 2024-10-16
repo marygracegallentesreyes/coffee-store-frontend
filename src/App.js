@@ -8,18 +8,26 @@ import CartPage from './pages/CartPage';
 
 function App() {
   const [cartItems, setCartItems] = useState([]);
-  const products = [
-    { id: 1, name: 'Espresso', price: 5, description: 'Rich and bold espresso', image: 'espresso.jpg' },
-    { id: 2, name: 'Cappuccino', price: 6, description: 'Creamy cappuccino', image: 'cappuccino.jpg' },
-    // Add more products as needed
-  ];
+
+  const addToCart = (productId) => {
+    fetch('http://localhost:5000/cart', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ productId, quantity: 1 })
+    })
+    .then(response => response.json())
+    .then(data => setCartItems(prevItems => [...prevItems, data]))
+    .catch(error => console.error('Error adding to cart:', error));
+  };
 
   return (
     <Router>
       <Header />
       <Routes>
-        <Route path="/" element={<HomePage products={products} />} />
-        <Route path="/product/:id" element={<ProductDetailPage products={products} />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/product/:id" element={<ProductDetailPage addToCart={addToCart} />} />
         <Route path="/cart" element={<CartPage cartItems={cartItems} />} />
       </Routes>
       <Footer />
